@@ -1,2 +1,2 @@
-# problems_modeling
-Trying to model problems and solve them as I come across while reading books or going through resources.
+# Experiments
+This repo carries all the experiments, tiny projects, etc. that I do to learn things.
