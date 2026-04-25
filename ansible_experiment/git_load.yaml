@@ -1,0 +1,60 @@
+- name: Clone repo, install dependencies, and run server
+  hosts: servers
+  become: true
+  vars:
+    repo_url: "https://github.com/satyahbp/load_testing.git" 
+    repo_dest: "/opt/app"
+    venv_path: "/opt/app/venv"
+
+  tasks:
+    - name: Clone the git repository
+      git:
+        repo: "{{ repo_url }}"
+        dest: "{{ repo_dest }}"
+        force: yes
+
+    - name: Install pip and venv if not present
+      package:
+        name:
+          - python3-pip
+          - python3-venv
+        state: present
+
+    - name: Create virtual environment
+      command: python3 -m venv {{ venv_path }}
+      args:
+        creates: "{{ venv_path }}/bin/activate"
+
+    - name: Install Python dependencies from requirements.txt
+      pip:
+        requirements: "{{ repo_dest }}/requirements.txt"
+        virtualenv: "{{ venv_path }}"
+
+    - name: Copy systemd service file
+      copy:
+        src: python_server.service
+        dest: /etc/systemd/system/python_server.service
+        mode: '0644'
+
+    - name: Start and enable python server service
+      systemd:
+        name: python_server
+        state: started
+        enabled: yes
+        daemon_reload: yes
+
+    - name: Copy nginx config
+      copy:
+        src: nginx_proxy.conf
+        dest: /etc/nginx/sites-available/proxy.conf
+
+    - name: Enable nginx config
+      file:
+        src: /etc/nginx/sites-available/proxy.conf
+        dest: /etc/nginx/sites-enabled/proxy.conf
+        state: link
+
+    - name: Restart nginx
+      service:
+        name: nginx
+        state: restarted

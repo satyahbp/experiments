@@ -1,0 +1,6 @@
+- name: Shutdown all servers
+  hosts: servers
+  become: true
+  tasks:
+    - name: Shutdown the server
+      command: shutdown now

@@ -1,0 +1,14 @@
+[Unit]
+Description=Python Server Service
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/app
+ExecStart=/opt/app/venv/bin/python /opt/app/server.py
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

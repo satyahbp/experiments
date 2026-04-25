@@ -1,0 +1,16 @@
+- name: Install NGINX on all servers
+  hosts: servers
+  become: true
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+    - name: Install NGINX
+      apt:
+        name: nginx
+        state: present
+    - name: Ensure NGINX is started
+      service:
+        name: nginx
+        state: started
+        enabled: yes
