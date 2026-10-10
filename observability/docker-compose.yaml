@@ -1,0 +1,22 @@
+services:
+
+  fastapi:
+    build:
+      context: ./fastapi_code
+    container_name: fastapi-app
+    ports:
+      - "8000:8000"
+    
+  prometheus:
+    build:
+      context: ./prometheus
+    container_name: prometheus-app
+    ports:
+      - "9090:9090"
+    depends_on:
+      - fastapi
+
+  postgres:
+    build: ./postgresql
+    ports:
+      - "5432:5432"
