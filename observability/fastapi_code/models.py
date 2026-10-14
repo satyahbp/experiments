@@ -7,7 +7,7 @@ class Base(DeclarativeBase):
 
 
 class Student(Base):
-    __tablename__ = "Student"
+    __tablename__ = "student"
 
     id: Mapped[int] = mapped_column(
         primary_key=True,

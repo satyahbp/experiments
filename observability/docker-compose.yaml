@@ -20,3 +20,43 @@ services:
     build: ./postgresql
     ports:
       - "5432:5432"
+    command:
+      - "postgres"
+      - "-c"
+      - "shared_preload_libraries=pg_stat_statements"
+
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter
+    container_name: postgres-exporter
+    environment:
+      DATA_SOURCE_URI: "postgres:5432/school?sslmode=disable"
+      DATA_SOURCE_USER: admin
+      DATA_SOURCE_PASS: password
+    command:
+      - "--collector.stat_statements"
+      - "--collector.stat_statements.include_query"
+    ports:
+      - "9187:9187"
+    depends_on:
+      - postgres
+
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: node-exporter
+    command: 
+      - '--path.rootfs=/host'
+    pid: host
+    restart: unless-stopped
+    ports:
+      - "9100:9100"
+    volumes:
+      - '/:/host:ro,rslave,z'
+
+  grafana:
+    build: ./grafana
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+    restart: unless-stopped
