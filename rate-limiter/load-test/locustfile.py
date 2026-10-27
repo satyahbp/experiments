@@ -1,5 +1,7 @@
-import random, uuid
+import random, uuid, logging
 from locust import HttpUser, task, between
+
+logger = logging.getLogger(__name__)
 
 
 class APIUser(HttpUser):
@@ -31,7 +33,7 @@ class APIUser(HttpUser):
                 response.failure(f"Mismatched user_id in response: {body}")
 
 
-    @task(2)
+    @task(1)
     def create_student(self):
         # Unique email per request so a unique constraint on email won't cause failures
         payload = {
@@ -56,16 +58,59 @@ class APIUser(HttpUser):
 
     @task(3)
     def list_students(self):
+        limit = random.randint(10, 100)
+        section = random.choice(["A", "B", "C"])
+
         with self.client.get(
             "/api/students",
+            params={
+                "limit": limit,
+                "offset": 0,
+                "sort_by": "id",
+                "section": section,
+            },
             name="GET /api/students [list]",
             catch_response=True,
         ) as response:
             if response.status_code != 200:
                 response.failure(f"Unexpected status: {response.status_code}")
+                logger.error(
+                    "HTTP failure: status=%s, url=%s, body=%s",
+                    response.status_code,
+                    response.url,
+                    response.text[:500],
+                )
                 return
-            body = response.json()
+
+            try:
+                body = response.json()
+            except ValueError:
+                response.failure("Response is not valid JSON")
+                logger.exception("Invalid JSON response: %s", response.text[:500])
+                return
+
+            error = None
             if not isinstance(body, list):
-                response.failure(f"Expected a list, got {type(body).__name__}")
+                error = f"Expected a list, got {type(body).__name__}"
+            elif len(body) > limit:
+                error = f"Expected at most {limit} students, got {len(body)}"
+            elif any(student.get("section") != section for student in body):
+                error = f"Expected section {section}; received sections: " + str(
+                    sorted({
+                        student.get("section")
+                        for student in body
+                    })
+                )
             elif body and "email" not in body[0]:
-                response.failure(f"Student entries are missing fields: {body[0]}")
+                error = f"Student entries are missing fields: {body[0]}"
+
+            if error:
+                response.failure(error)
+                logger.error(
+                    "Validation failure: %s | requested_section=%s | "
+                    "limit=%s | url=%s",
+                    error,
+                    section,
+                    limit,
+                    response.url,
+                )

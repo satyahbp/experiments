@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, HTTPException, Query
 from pydantic import BaseModel
 from prometheus_fastapi_instrumentator import Instrumentator
 from sqlalchemy.orm import Session
@@ -47,7 +47,41 @@ def create_student(
 
 
 @app.get("/students")
-def get_students(db: Session = Depends(get_db)):
-    students = db.query(Student).all()
+def get_students(
+    sort_by: str = Query(default="id"),
+    limit: int = Query(default=10, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
+    section: str | None = Query(default=None),
+    db: Session = Depends(get_db),
+):
+    allowed_columns = {
+        "id": Student.id,
+        "name": Student.name,
+        "email": Student.email,
+        "class_": Student.class_,
+        "class": Student.class_,
+        "section": Student.section,
+    }
+
+    column = allowed_columns.get(sort_by)
+
+    if column is None:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid sort_by. Allowed values: {list(allowed_columns.keys())}",
+        )
+
+    query = db.query(Student)
+
+    if section is not None:
+        query = query.filter(Student.section == section)
+
+    students = (
+        query
+        .order_by(column, Student.id)
+        .limit(limit)
+        .offset(offset)
+        .all()
+    )
 
     return students
