@@ -46,8 +46,6 @@ services:
     command: 
       - '--path.rootfs=/host'
     pid: host
-    ports:
-      - "${NODE_EXPORTER_BIND_IP}:${NODE_EXPORTER_PORT}:9100"
     volumes:
       - '/:/host:ro,rslave,z'
 
