@@ -1,0 +1,78 @@
+services:
+
+  fastapi:
+    build:
+      context: ../../app
+      dockerfile: Dockerfile
+    container_name: fastapi-app
+    restart: unless-stopped
+    ports:
+      - "${APP_BIND_IP}:${APP_PORT}:8000"
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - backend
+
+  postgres:
+    build: ./postgresql
+    container_name: postgresql
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    command:
+      - "postgres"
+      - "-c"
+      - "shared_preload_libraries=pg_stat_statements"
+    networks:
+      - backend
+
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: node-exporter
+    restart: unless-stopped
+    network_mode: host
+    command: 
+      - '--path.rootfs=/host'
+    pid: host
+    ports:
+      - "${NODE_EXPORTER_BIND_IP}:${NODE_EXPORTER_PORT}:9100"
+    volumes:
+      - '/:/host:ro,rslave,z'
+
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter
+    container_name: postgres-exporter
+    restart: unless-stopped
+    environment:
+      DATA_SOURCE_URI: "${POSTGRES_EXPORTER_URI}"
+      DATA_SOURCE_USER: ${POSTGRES_EXPORTER_USER}
+      DATA_SOURCE_PASS: ${POSTGRES_EXPORTER_PASSWORD}
+    command:
+      - "--collector.stat_statements"
+      - "--collector.stat_statements.include_query"
+    ports:
+      - "${POSTGRES_EXPORTER_BIND_IP}:${POSTGRES_EXPORTER_PORT}:9187"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - backend
+
+networks:
+  backend:
+    driver: bridge
+
+volumes:
+  postgres_data:
