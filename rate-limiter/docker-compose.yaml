@@ -13,39 +13,6 @@ services:
       - grafana
       - locust
     restart: unless-stopped
-    
-  prometheus:
-    build:
-      context: ./prometheus
-    container_name: prometheus-app
-    ports:
-      - "9090:9090"
-    depends_on:
-      - fastapi
-    command: 
-      - --config.file=/etc/prometheus/prometheus.yml
-      - --web.external-url=/prometheus/
-      - --web.route-prefix=/prometheus/
-
-  
-
-  
-
-  
-
-  grafana:
-    build: ./grafana
-    container_name: grafana
-    ports:
-      - "3000:3000"
-    depends_on:
-      - prometheus
-    restart: unless-stopped
-    logging:
-      driver: none
-    environment:
-      - GF_SERVER_ROOT_URL=%(protocol)s://%(domain)s/grafana/
-      - GF_SERVER_SERVE_FROM_SUB_PATH=true
 
   locust:
     build: 
