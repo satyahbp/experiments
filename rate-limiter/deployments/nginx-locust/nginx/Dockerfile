@@ -1,6 +1,6 @@
 FROM nginx:stable
 
 # Replace the default Nginx configuration
-COPY nginx.conf /etc/nginx/nginx.conf
+COPY default.conf.template /etc/nginx/templates/default.conf.template
 
 EXPOSE 80
