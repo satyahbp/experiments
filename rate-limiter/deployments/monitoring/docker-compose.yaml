@@ -8,7 +8,7 @@ services:
     ports:
       - "${PROMETHEUS_BIND_IP}:${PROMETHEUS_PORT}:9090"
     volumes:
-      -prometheus_data:/prometheus
+      - prometheus_data:/prometheus
     command:
       - "--config.file=/etc/prometheus/prometheus.yml"
       - "--storage.tsdb.path=/prometheus"
