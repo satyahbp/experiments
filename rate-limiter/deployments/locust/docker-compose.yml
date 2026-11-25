@@ -1,0 +1,21 @@
+services:
+  locust:
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    container_name: locust
+    restart: unless-stopped
+
+    ports:
+      - "${LOCUST_BIND_IP}:${LOCUST_PORT}:8089"
+
+    command:
+      - "-f"
+      - "/mnt/locust/locustfile.py"
+      - "--web-host"
+      - "0.0.0.0"
+      - "--host"
+      - "${LOCUST_TARGET_HOST}"
+      - "--loglevel"
+      - "DEBUG"

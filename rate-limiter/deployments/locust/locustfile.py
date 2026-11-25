@@ -5,8 +5,6 @@ logger = logging.getLogger(__name__)
 
 
 class APIUser(HttpUser):
-    # Nginx service name on the Docker Compose network
-    host = "http://nginx:80"
 
     # Wait between requests to simulate user behavior
     wait_time = between(0.1, 0.5)

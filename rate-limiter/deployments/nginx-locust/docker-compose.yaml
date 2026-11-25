@@ -14,31 +14,3 @@ services:
       PROMETHEUS_PORT: ${PROMETHEUS_PORT}
       GRAFANA_PORT: ${GRAFANA_PORT}
       NGINX_ENVSUBST_FILTER: '^(APP_VM_IP|APP_API_PORT|MONITORING_VM_IP|PROMETHEUS_PORT|GRAFANA_PORT)$'
-    depends_on:
-      - locust
-    networks:
-      - proxy-network
-  
-  locust:
-    build:
-      context: ./load-test
-      dockerfile: Dockerfile
-    container_name: locust
-    restart: unless-stopped
-    command:
-      - "-f"
-      - "/mnt/locust/locustfile.py"
-      - "--web-host"
-      - "0.0.0.0"
-      - "--web-base-path"
-      - "/locust"
-      - "--host"
-      - "http://nginx"
-      - "--loglevel"
-      - "DEBUG"
-    networks:
-      - proxy-network
-
-networks:
-  proxy-network:
-    driver: bridge
